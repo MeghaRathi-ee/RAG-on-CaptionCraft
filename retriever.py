@@ -24,4 +24,8 @@ class Retriever:
             n_results=k
         )
 
+        if not results["documents"] or len(results["documents"][0]) == 0:
+            return ["Instagram captions are short, casual, and emoji-friendly."]
+
         return results["documents"][0]
+
