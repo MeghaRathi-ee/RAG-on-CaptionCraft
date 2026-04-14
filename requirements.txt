@@ -1,0 +1,18 @@
+# Image captioning
+torch
+torchvision
+transformers
+Pillow
+
+# Embeddings & vector store
+sentence-transformers
+chromadb
+
+# LLM backend
+ollama>=0.2.0
+
+# UI
+streamlit
+
+# Utilities
+numpy
