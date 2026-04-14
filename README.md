@@ -1,57 +1,115 @@
-# 🖼️ CaptionCraft-RAG
+# ✨ CaptionCraft RAG
 
-### Context-Aware Image Captioning using Retrieval-Augmented Generation (RAG)
+### Context-Aware Instagram Caption Generator using Retrieval-Augmented Generation (RAG)
 
-CaptionCraft-RAG is an intelligent image captioning system enhanced with **Retrieval-Augmented Generation (RAG)**.
-It generates stylish, context-aware captions by combining:
-
-* 🧠 Vision Model (BLIP)
-* 🔎 Vector Retrieval (ChromaDB)
-* 📚 Text Embeddings (Sentence-Transformers)
-* 🎨 Interactive Web UI (Streamlit)
+CaptionCraft RAG is an intelligent Instagram caption generation system that combines **Computer Vision + Vector Search + LLM** to generate creative, styled captions from any image.
 
 ---
 
-## 🚀 Features
+## 🚀 How It Works
 
-* Upload an image
-* Generate base caption using BLIP
-* Retrieve contextual style knowledge
-* Produce styled Instagram-like captions
-* Interactive Streamlit web interface
-* CPU-friendly implementation
+```
+Input Image
+     ↓
+BLIP Vision Model  →  Base Caption ("a man kayaking on a lake")
+     ↓
+SentenceTransformer Embedding
+     ↓
+ChromaDB Vector Search  →  Retrieves style-relevant context
+     ↓
+Groq LLM (llama-3.1-8b-instant)  →  Generates 3 styled captions
+     ↓
+Streamlit UI  →  Pick your favourite and copy to Instagram
+```
 
 ---
+
+## 🎨 Supported Caption Styles
+
+| Style | Description |
+|---|---|
+| General | Short, punchy, emoji-friendly |
+| Travel | Wanderlust, adventurous, FOMO-inducing |
+| Food | Indulgent, sensory, appetite-driven |
+| Fitness | Motivational, energetic, empowering |
+| Aesthetic | Poetic, minimalist, mood-driven |
+| Funny | Sarcastic, relatable, meme-style |
+| Motivational | Uplifting, growth-mindset, inspiring |
+| Story | Long-form 8-line personal narrative |
+
+---
+
 
 ## 🏗️ System Architecture
 
 ```
-          Input Image
-               ↓
-      BLIP Image Captioning
-               ↓
-         Base Caption
-               ↓
-      SentenceTransformer
-               ↓
-         ChromaDB Retrieval
-               ↓
-      Style Transformation
-               ↓
-        Final RAG Caption
+┌─────────────────────────────────────────────────────────────────┐
+│                        CAPTIONCRAFT RAG                         │
+└─────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────┐
+  │  User Upload │  JPG / PNG / WEBP
+  └──────┬───────┘
+         │
+         ▼
+  ┌──────────────────────┐
+  │   BLIP Vision Model  │  Salesforce/blip-image-captioning-base
+  │  (caption_model.py)  │  Generates base caption from image
+  └──────────┬───────────┘
+             │
+             │  "a man kayaking on a lake at sunset"
+             ▼
+  ┌──────────────────────┐        ┌───────────────────────────┐
+  │  SentenceTransformer │        │     Knowledge Base        │
+  │  (embedding_model.py)│        │   data/knowledge/*.txt    │
+  │  all-MiniLM-L6-v2   │        │  general, travel, food,   │
+  └──────────┬───────────┘        │  fitness, aesthetic,      │
+             │                    │  funny, motivational,     │
+             │  Query Embedding   │  story                    │
+             ▼                    └────────────┬──────────────┘
+  ┌──────────────────────┐                     │ Indexed at build time
+  │      ChromaDB        │◄────────────────────┘
+  │    Vector Store      │
+  │   (retriever.py)     │  Retrieves top-3 semantically
+  └──────────┬───────────┘  similar style documents
+             │
+             │  Style Context (e.g. Travel tone, hashtags, examples)
+             ▼
+  ┌──────────────────────┐
+  │      Groq API        │  llama-3.1-8b-instant
+  │   (rag_pipeline.py)  │  Prompt = Base Caption + Style Context
+  │                      │  Generates 3 styled captions
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │    Streamlit UI      │  Style selector dropdown
+  │      (app.py)        │  3 caption options displayed
+  │                      │  Copy to Instagram
+  └──────────────────────┘
 ```
 
----
+### RAG Flow Explained
 
+| Step | Component | What happens |
+|---|---|---|
+| 1 | BLIP | Converts image pixels → text description |
+| 2 | SentenceTransformer | Converts text → 384-dim vector embedding |
+| 3 | ChromaDB | Finds top-3 most similar style docs via cosine similarity |
+| 4 | Groq LLM | Takes base caption + style context → generates 3 captions |
+| 5 | Streamlit | Displays results, user picks and copies caption |
+
+---
 ## 🛠️ Tech Stack
 
-| Component        | Technology       |
-| ---------------- | ---------------- |
-| Image Captioning | Salesforce BLIP  |
-| Embeddings       | all-MiniLM-L6-v2 |
-| Vector Database  | ChromaDB         |
-| Backend          | Python           |
-| UI               | Streamlit        |
+| Component | Technology |
+|---|---|
+| Image Captioning | Salesforce BLIP |
+| Text Embeddings | all-MiniLM-L6-v2 (SentenceTransformers) |
+| Vector Database | ChromaDB |
+| LLM | Groq API — llama-3.1-8b-instant |
+| Backend | Python |
+| UI | Streamlit |
 
 ---
 
@@ -61,144 +119,129 @@ It generates stylish, context-aware captions by combining:
 caption_craft/
 │
 ├── data/
-│   ├── images/
 │   └── knowledge/
+│       ├── general.txt
+│       ├── travel.txt
+│       ├── food.txt
+│       ├── fitness.txt
+│       ├── aesthetic.txt
+│       ├── funny.txt
+│       ├── motivational.txt
+│       └── story.txt
 │
 ├── models/
-│   ├── caption_model.py
-│   └── embedding_model.py
+│   ├── caption_model.py       # BLIP image captioning
+│   └── embedding_model.py     # SentenceTransformer embeddings
 │
-├── vector_store/
+├── vector_store/              # Auto-generated by build_index.py
 │
-├── build_index.py
-├── retriever.py
-├── rag_pipeline.py
-├── app.py
-├── streamlit_app.py
-└── README.md
+├── rag_pipeline.py            # Core RAG pipeline
+├── retriever.py               # ChromaDB retrieval logic
+├── build_index.py             # Builds ChromaDB vector index
+├── app.py                     # Streamlit web UI
+├── requirements.txt
+└── .env                       # Groq API key (never committed)
 ```
 
 ---
 
-## ⚙️ Installation Guide
+## ⚙️ Installation
 
-### 1️⃣ Clone Repository
+### 1. Clone the repo
 
 ```bash
-git clone <your-repo-url>
-cd caption_craft
+git clone https://github.com/MeghaRathi-ee/RAG-on-CaptionCraft.git
+cd RAG-on-CaptionCraft
 ```
 
-### 2️⃣ Create Conda Environment
+### 2. Create conda environment
 
 ```bash
 conda create -n captioncraft python=3.10
 conda activate captioncraft
 ```
 
-### 3️⃣ Install Dependencies
+### 3. Install dependencies
 
 ```bash
-pip install torch torchvision transformers
-pip install sentence-transformers chromadb
-pip install streamlit pillow
+pip install -r requirements.txt
 ```
 
----
+### 4. Set up Groq API key
 
-## 🔧 Build Vector Index
+Get a free API key at https://console.groq.com/keys
 
-Before running the application, build the ChromaDB knowledge index:
+```bash
+echo "GROQ_API_KEY=your_groq_api_key_here" > .env
+```
+
+### 5. Build ChromaDB index
 
 ```bash
 python build_index.py
 ```
 
 Expected output:
-
 ```
-✅ ChromaDB index created successfully
+✅ ChromaDB index created with 8 documents:
+   - general.txt      [style=General]
+   - travel.txt       [style=Travel]
+   - food.txt         [style=Food]
+   - fitness.txt      [style=Fitness]
+   - aesthetic.txt    [style=Aesthetic]
+   - funny.txt        [style=Funny]
+   - motivational.txt [style=Motivational]
+   - story.txt        [style=Story]
 ```
 
----
-
-## ▶️ Run the Application
-
-### CLI Version:
+### 6. Run the app
 
 ```bash
-python app.py
+streamlit run app.py
 ```
 
-### Streamlit Web Interface:
-
-```bash
-streamlit run streamlit_app.py
-```
-
-Open in browser:
-
-```
-http://localhost:8501
-```
+Open in browser: http://localhost:8501
 
 ---
 
-## 🧠 Example Output
+## 💡 Example Output
 
-**Base Caption:**
+**Image:** Man fishing on a lake at sunset
 
-> a woman sitting on a couch with a cup of coffee
+**Style:** Story
 
-**Retrieved Context:**
-
-> Instagram captions are short, casual, and emoji-friendly.
-
-**Final RAG Caption:**
-
-> coffee vibes ☕✨
-
----
-
-## 💡 Why RAG?
-
-Traditional image captioning models rely only on visual features.
-
-CaptionCraft-RAG enhances generation by:
-
-* Retrieving contextual style knowledge
-* Augmenting caption generation with retrieved information
-* Producing expressive and domain-aware captions
-
-This demonstrates integration of **Computer Vision + NLP + Vector Databases** in a unified pipeline.
+**Generated Caption:**
+```
+It was a Tuesday evening when I finally stopped running 🌅
+The lake was still, the kind of still that makes you hold your breath.
+I hadn't fished in years — not since my grandfather used to bring me here.
+Being back felt like finding a page I'd forgotten I'd written.
+There's something about water that strips away the noise of the world.
+And I remembered what it felt like to just... be somewhere, without needing to perform it.
+Some places don't change. They just wait for you to come back. 🎣
+#storytime #inmyfeels #naturetherapy #slowliving #lifestories
+```
 
 ---
 
 ## 🔮 Future Improvements
 
-* Multiple style selection (Funny, Formal, Travel, Food)
-* LLM-based caption refinement
-* Multilingual support
-* Cloud deployment
-* REST API integration
+- [ ] Multilingual caption support
+- [ ] User-defined custom style
+- [ ] Caption length control (short / medium / long)
+- [ ] REST API endpoint
+- [ ] Cloud deployment (Hugging Face Spaces / Streamlit Cloud)
 
 ---
 
 ## 👩‍💻 Author
 
-**Megha Rathi**
-M.E. Artificial Intelligence & Machine Learning
+**Megha Rathi**  
+M.E. Artificial Intelligence & Machine Learning, Manipal  
+[GitHub](https://github.com/MeghaRathi-ee)
 
 ---
 
 ## 📜 License
 
 This project is developed for academic and educational purposes.
-
----
-
-## ⭐ If You Like This Project
-
-Feel free to star ⭐ the repository and contribute!
-
----
