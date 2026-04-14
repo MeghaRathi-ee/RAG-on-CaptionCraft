@@ -2,8 +2,12 @@ from rag_pipeline import RAGCaptionCraft
 
 rag = RAGCaptionCraft()
 
-base, final, context = rag.generate("data/images/sample.jpg")
+result = rag.generate("data/images/sample.jpg")
 
-print("\nBase Caption:", base)
-print("\nRetrieved Context:", context)
-print("\nFinal RAG Caption:", final)
+print("\nBase Caption:", result["base_caption"])
+
+print("\nRetrieved Context:")
+for caption in result["retrieved_context"]:
+    print("-", caption)
+
+print("\nFinal RAG Caption:", result["final_caption"])
