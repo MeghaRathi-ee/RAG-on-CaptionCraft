@@ -25,7 +25,7 @@ with st.sidebar:
 
     style = st.selectbox(
         "Caption Style",
-        ["General", "Travel", "Food", "Fitness", "Aesthetic", "Funny", "Motivational"],
+        ["General", "Travel", "Food", "Fitness", "Aesthetic", "Funny", "Motivational", "Story"],
         help="This controls the tone and hashtags of your captions.",
     )
 
@@ -90,7 +90,7 @@ if uploaded_file:
                     st.text_area(
                         label=f"Option {i}",
                         value=caption,
-                        height=100,
+                        height=300 if style == "Story" else 100,
                         key=f"caption_{i}",
                     )
                 with col2:
